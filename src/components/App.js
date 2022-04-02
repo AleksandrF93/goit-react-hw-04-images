@@ -5,7 +5,7 @@ import Loader from 'components/Loader';
 import Button from 'components/Button';
 import Modal from 'components/Modal';
 import { ToastContainer } from 'react-toastify';
-import imageAPI from './services/ImageApi';
+import imageAPI from '../services/ImageApi';
 import 'react-toastify/dist/ReactToastify.css';
 import s from './styles.module.css'
 
@@ -17,30 +17,31 @@ export default function App() {
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [largeImageURL, setLargeImageURL] = useState({});
+  const [data, setData] = useState([]);
 
   useEffect(() => {
     if (imageName === '') return;
+    setStatus("pending");
+    fetchQuery();
+  }, [imageName]);
+
+  const fetchQuery = () => {
     imageAPI
       .fechImage(imageName, page)
-      .then(response => {
-        setImages((images) => [...images, ...response.hits]);
+      .then((data) => {
+        setData(data);
+        setImages((images) => [...images, ...data.hits]);
+        setPage(page + 1);
         setStatus("resolved");
       }).catch(error => {
         setStatus("rejected");
         setError(error);
       })
-  }, [imageName, page]);
-
-  const onloadMore = () => {
-    setPage((prev) => prev + 1);
   };
     
-  
-
   const handleSearchbarSubmit = imageName => {
     setImageName(imageName);
     setPage(1);
-    setImages([]);
   };
 
    const openModal = (imageUrl) => {
@@ -51,8 +52,6 @@ export default function App() {
    const closeModal = () => {
      setShowModal(false);
    };
-  
-  
   
   return (
       <div>
@@ -66,10 +65,10 @@ export default function App() {
             images={images}
             toggleModal={openModal}
             showModal={showModal} />
-            
-          <div className={s.LoadMoreBtn}>
-                <Button onClickBtn={onloadMore} />
-              </div>
+          {images.length !== data.totalHits &&
+            <div className={s.LoadMoreBtn}>
+              <Button onClickBtn={fetchQuery} />
+            </div>}
           </main>}
           {showModal && (
           <Modal onClose={closeModal}>
@@ -80,6 +79,7 @@ export default function App() {
       </div>
     );
 }
+
 
  
 
